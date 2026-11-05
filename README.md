@@ -22,6 +22,10 @@ Docker e sobe com um comando.
 - **Infraestrutura como código:** o banco, o schema e o painel do Metabase são criados por
   script, com versões fixas de todas as imagens e bibliotecas.
 
+## Painel
+
+![Painel de indicadores no Metabase](docs/painel_metabase.png)
+
 ## O que os dados mostram
 
 | Pergunta | Resultado |
@@ -94,8 +98,18 @@ docker compose up -d --build
 3. Nas execuções seguintes, sem `carregar_bronze`, a DAG reaproveita o bronze e reprocessa
    o resto em cerca de 8 minutos.
 
-Os anos processados ficam na variável `ANOS_PIPELINE` do `docker-compose.yaml` (padrão
-`2023,2024`). No Linux, rode antes `echo "AIRFLOW_UID=$(id -u)" > .env`.
+No Linux, rode antes `echo "AIRFLOW_UID=$(id -u)" > .env`.
+
+### Período e agendamento
+
+Os anos de 2023 e 2024 foram escolhidos apenas para o desenvolvimento. O período é
+configurável na variável `ANOS_PIPELINE` do `docker-compose.yaml`, e qualquer ano
+disponível no DATASUS pode ser carregado.
+
+O DW também está pronto para rodar de forma automática, por exemplo diariamente para a
+SESAU-AL: basta definir o `schedule` da DAG (como `@daily`). Como a carga é idempotente,
+cada execução reprocessa o período sem duplicar dados, e os novos arquivos mensais do
+DATASUS entram assim que são publicados.
 
 ## Pipeline
 
