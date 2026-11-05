@@ -1,0 +1,44 @@
+# ----------------------------------------------------------------------------
+# Gerado em tempo de execução (recriado a cada execução da DAG)
+# ----------------------------------------------------------------------------
+# Logs do Airflow e notebooks executados pelo papermill (logs/notebooks/)
+logs/
+*.log
+
+# ----------------------------------------------------------------------------
+# Python e Jupyter
+# ----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# ----------------------------------------------------------------------------
+# Dados (o DW é recriado pela DAG a partir das fontes públicas do DATASUS;
+# nenhum dado vai para o repositório)
+# ----------------------------------------------------------------------------
+data/
+*.dbc
+*.dbf
+*.zip
+*.csv
+*.parquet
+
+# ----------------------------------------------------------------------------
+# Configuração local e segredos
+# ----------------------------------------------------------------------------
+# .env é usado só para AIRFLOW_UID no Linux (cada máquina tem o seu)
+.env
+
+# ----------------------------------------------------------------------------
+# IDE e sistema operacional
+# ----------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# notebook de uso local
+notebooks/00_demonstracao_video.ipynb
