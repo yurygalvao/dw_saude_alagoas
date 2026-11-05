@@ -1,0 +1,138 @@
+x-airflow-common:
+  &airflow-common
+  build: .
+  image: dw-alagoas-airflow:2.8.1
+  user: "${AIRFLOW_UID:-50000}:0"
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: '46GLR12BmB2_325_678901234567890123456789012='
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    PYTHONDONTWRITEBYTECODE: "1"
+    ORACLE_USER: DW_ALAGOAS
+    ORACLE_PASSWORD: dw_password_123
+    ORACLE_HOST: oracle
+    ORACLE_PORT: 1521
+    ORACLE_SERVICE: FREEPDB1
+    ANOS_PIPELINE: "2023,2024"
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./notebooks:/opt/airflow/notebooks
+    - ./sql:/opt/airflow/sql
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  oracle:
+    # Oracle 23.26.3 Free fixado por digest (a tag "latest" muda com o tempo)
+    image: gvenzl/oracle-free@sha256:7ed34d0ade89c91a553c9cbe9d42457c758fa29a762aaaa3137541ff30a2d1cb
+    container_name: oracle_dw
+    environment:
+      - ORACLE_PASSWORD=dw_password_123
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      # cria tablespaces e o owner DW_ALAGOAS na primeira inicialização
+      - ./sql/00_init_owner.sql:/container-entrypoint-initdb.d/00_init_owner.sql:ro
+    healthcheck:
+      test: ["CMD", "/opt/oracle/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_airflow
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # cria o banco do metabase na primeira inicialização
+      - ./metabase/init_postgres.sql:/docker-entrypoint-initdb.d/init_postgres.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow_init
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow_webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow_scheduler
+    command: scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  metabase:
+    image: metabase/metabase:v0.65.2.2
+    container_name: metabase_dw
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: airflow
+      MB_DB_PASS: airflow
+      MB_DB_HOST: postgres
+    volumes:
+      - metabase_plugins:/plugins
+      - ./metabase/ojdbc8.jar:/plugins/ojdbc8.jar:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      oracle:
+        condition: service_started
+
+  # configura o metabase (admin, conexão com o oracle, perguntas e painel) e termina
+  metabase-init:
+    image: dw-alagoas-airflow:2.8.1
+    container_name: metabase_init
+    entrypoint: ["python", "/opt/metabase/criar_painel.py"]
+    environment:
+      MB_URL: http://metabase:3000
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./metabase:/opt/metabase:ro
+    depends_on:
+      metabase:
+        condition: service_started
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  oracle_data:
+  postgres_data:
+  metabase_plugins:

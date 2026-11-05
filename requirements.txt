@@ -1,0 +1,8 @@
+# Dependências do pipeline (versões fixas = ambiente reprodutível)
+papermill==2.7.0
+ipykernel==7.3.0
+pandas==2.1.4
+oracledb==26.1.0
+requests==2.31.0
+dbfread==2.0.7
+pyreaddbc==2.0.4

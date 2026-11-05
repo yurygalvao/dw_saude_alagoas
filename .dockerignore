@@ -1,0 +1,3 @@
+# O build da imagem só precisa do requirements.txt
+*
+!requirements.txt
