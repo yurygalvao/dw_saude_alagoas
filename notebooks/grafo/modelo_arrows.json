@@ -1,0 +1,340 @@
+{
+ "diagramName": "DW Saude Alagoas - modelo do grafo",
+ "graph": {
+  "style": {
+   "font-family": "sans-serif",
+   "background-color": "#ffffff",
+   "node-color": "#ffffff",
+   "border-width": 2,
+   "border-color": "#000000",
+   "radius": 75,
+   "node-padding": 5,
+   "node-margin": 2,
+   "outside-position": "auto",
+   "node-icon-image": "",
+   "node-background-image": "",
+   "icon-position": "inside",
+   "icon-size": 64,
+   "caption-position": "inside",
+   "caption-max-width": 200,
+   "caption-color": "#000000",
+   "caption-font-size": 40,
+   "caption-font-weight": "normal",
+   "label-position": "inside",
+   "label-display": "pill",
+   "label-color": "#000000",
+   "label-background-color": "#ffffff",
+   "label-border-color": "#000000",
+   "label-border-width": 3,
+   "label-font-size": 22,
+   "label-padding": 5,
+   "label-margin": 4,
+   "directionality": "directed",
+   "detail-position": "inline",
+   "detail-orientation": "parallel",
+   "arrow-width": 4,
+   "arrow-color": "#000000",
+   "margin-start": 5,
+   "margin-end": 5,
+   "margin-peer": 20,
+   "attachment-start": "normal",
+   "attachment-end": "normal",
+   "relationship-icon-image": "",
+   "type-color": "#000000",
+   "type-background-color": "#ffffff",
+   "type-border-color": "#000000",
+   "type-border-width": 0,
+   "type-font-size": 15,
+   "type-padding": 5,
+   "property-position": "outside",
+   "property-alignment": "colon",
+   "property-color": "#000000",
+   "property-font-size": 15,
+   "property-font-weight": "normal"
+  },
+  "nodes": [
+   {
+    "id": "n0",
+    "position": {
+     "x": -500,
+     "y": -330
+    },
+    "caption": "",
+    "labels": [
+     "Macrorregiao"
+    ],
+    "properties": {
+     "nome": "String"
+    },
+    "style": {}
+   },
+   {
+    "id": "n1",
+    "position": {
+     "x": -500,
+     "y": -60
+    },
+    "caption": "",
+    "labels": [
+     "Regiao"
+    ],
+    "properties": {
+     "nome": "String"
+    },
+    "style": {}
+   },
+   {
+    "id": "n2",
+    "position": {
+     "x": -150,
+     "y": 170
+    },
+    "caption": "",
+    "labels": [
+     "Municipio"
+    ],
+    "properties": {
+     "cod_ibge": "String",
+     "nome": "String",
+     "uf": "String",
+     "tipo": "String"
+    },
+    "style": {}
+   },
+   {
+    "id": "n3",
+    "position": {
+     "x": 330,
+     "y": 170
+    },
+    "caption": "",
+    "labels": [
+     "Hospital"
+    ],
+    "properties": {
+     "cnes": "String",
+     "nome": "String",
+     "tipo": "String",
+     "gestao": "String",
+     "leitos_sus": "Integer",
+     "pct_ocupacao": "Float"
+    },
+    "style": {}
+   },
+   {
+    "id": "n4",
+    "position": {
+     "x": 90,
+     "y": -260
+    },
+    "caption": "",
+    "labels": [
+     "Especialidade"
+    ],
+    "properties": {
+     "cod": "String",
+     "nome": "String"
+    },
+    "style": {}
+   },
+   {
+    "id": "n5",
+    "position": {
+     "x": 780,
+     "y": 170
+    },
+    "caption": "",
+    "labels": [
+     "Procedimento"
+    ],
+    "properties": {
+     "cod": "String",
+     "nome": "String",
+     "custo_medio_estado": "Float"
+    },
+    "style": {}
+   },
+   {
+    "id": "n6",
+    "position": {
+     "x": 700,
+     "y": -170
+    },
+    "caption": "",
+    "labels": [
+     "Perfil"
+    ],
+    "properties": {
+     "chave": "String",
+     "sexo": "String",
+     "faixa_etaria": "String"
+    },
+    "style": {}
+   },
+   {
+    "id": "n7",
+    "position": {
+     "x": 90,
+     "y": 520
+    },
+    "caption": "",
+    "labels": [
+     "Mes"
+    ],
+    "properties": {
+     "ano_mes": "String",
+     "ano": "Integer",
+     "mes": "Integer",
+     "nome": "String"
+    },
+    "style": {}
+   },
+   {
+    "id": "n8",
+    "position": {
+     "x": -420,
+     "y": 520
+    },
+    "caption": "",
+    "labels": [
+     "GrupoDoenca"
+    ],
+    "properties": {
+     "nome": "String"
+    },
+    "style": {}
+   }
+  ],
+  "relationships": [
+   {
+    "id": "r0",
+    "fromId": "n2",
+    "toId": "n1",
+    "type": "PERTENCE_A",
+    "properties": {},
+    "style": {}
+   },
+   {
+    "id": "r1",
+    "fromId": "n1",
+    "toId": "n0",
+    "type": "PERTENCE_A",
+    "properties": {},
+    "style": {}
+   },
+   {
+    "id": "r2",
+    "fromId": "n1",
+    "toId": "n1",
+    "type": "TRANSBORDO",
+    "properties": {
+     "internacoes": "Integer"
+    },
+    "style": {}
+   },
+   {
+    "id": "r3",
+    "fromId": "n3",
+    "toId": "n2",
+    "type": "LOCALIZADO_EM",
+    "properties": {},
+    "style": {}
+   },
+   {
+    "id": "r4",
+    "fromId": "n2",
+    "toId": "n3",
+    "type": "INTERNOU_EM",
+    "properties": {
+     "internacoes": "Integer",
+     "valor": "Float",
+     "dias": "Integer",
+     "urgencias": "Integer",
+     "respiratorias": "Integer"
+    },
+    "style": {}
+   },
+   {
+    "id": "r5",
+    "fromId": "n2",
+    "toId": "n4",
+    "type": "DEMANDOU",
+    "properties": {
+     "internacoes": "Integer"
+    },
+    "style": {}
+   },
+   {
+    "id": "r6",
+    "fromId": "n3",
+    "toId": "n4",
+    "type": "ATENDEU",
+    "properties": {
+     "internacoes": "Integer",
+     "dias": "Integer"
+    },
+    "style": {}
+   },
+   {
+    "id": "r7",
+    "fromId": "n3",
+    "toId": "n5",
+    "type": "REALIZOU",
+    "properties": {
+     "internacoes": "Integer",
+     "custo_medio": "Float"
+    },
+    "style": {}
+   },
+   {
+    "id": "r8",
+    "fromId": "n6",
+    "toId": "n3",
+    "type": "INTERNADO_EM_URGENCIA",
+    "properties": {
+     "internacoes": "Integer"
+    },
+    "style": {}
+   },
+   {
+    "id": "r9",
+    "fromId": "n2",
+    "toId": "n7",
+    "type": "PRODUZIU",
+    "properties": {
+     "qtd_ambulatorial": "Integer",
+     "vl_ambulatorial": "Float",
+     "internacoes": "Integer",
+     "vl_hospitalar": "Float",
+     "vl_total": "Float"
+    },
+    "style": {}
+   },
+   {
+    "id": "r10",
+    "fromId": "n3",
+    "toId": "n7",
+    "type": "OCUPACAO",
+    "properties": {
+     "leitos_sus": "Integer",
+     "pacientes_dia": "Integer",
+     "leitos_dia": "Integer",
+     "pct": "Float"
+    },
+    "style": {}
+   },
+   {
+    "id": "r11",
+    "fromId": "n8",
+    "toId": "n7",
+    "type": "INTERNACOES_NO_MES",
+    "properties": {
+     "internacoes": "Integer",
+     "valor": "Float",
+     "ranking_ano": "Integer"
+    },
+    "style": {}
+   }
+  ]
+ }
+}

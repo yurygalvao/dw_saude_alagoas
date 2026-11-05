@@ -5,7 +5,7 @@ de internações (SIH), produção ambulatorial (SIA) e leitos (CNES) de Alagoas
 2024. O projeto vai da extração no FTP do DATASUS até um painel no Metabase. Tudo roda em
 Docker e sobe com um comando.
 
-**Stack:** Python · Apache Airflow · Oracle Database 23 · SQL · Docker · Metabase · Postgres
+**Stack:** Python · Apache Airflow · Oracle Database 23 · SQL · Neo4j · Cypher · Docker · Metabase · Postgres
 
 ## Destaques
 
@@ -19,6 +19,8 @@ Docker e sobe com um comando.
 - **Performance de DW:** carga direct-path, compressão, particionamento, índices bitmap e
   tablespaces separados. A fato ambulatorial agrega 16,5 milhões de registros em 1,1
   milhão de linhas.
+- **Grafo no Neo4j:** os fluxos de pacientes entre municípios, hospitais e regiões viram
+  um grafo de 907 nós e 12,6 mil relações, consultado em Cypher.
 - **Infraestrutura como código:** o banco, o schema e o painel do Metabase são criados por
   script, com versões fixas de todas as imagens e bibliotecas.
 
@@ -68,6 +70,9 @@ FTP DATASUS (SIH, SIA, CNES, TAB_SIA, TAB_SIH)  +  API IBGE
         │
         ▼
  MART    ── 1 tabela por pergunta de negócio (10 tabelas)  ──▶  Metabase
+        │
+        ▼
+ GRAFO   ── Neo4j: municípios, hospitais e regiões ligados pelas internações
 ```
 
 | Serviço | Papel | Endereço | Acesso |
@@ -75,6 +80,7 @@ FTP DATASUS (SIH, SIA, CNES, TAB_SIA, TAB_SIH)  +  API IBGE
 | Airflow | orquestração (1 task por tabela) | http://localhost:8080 | admin / admin |
 | Oracle 23 Free | Data Warehouse | localhost:1521/FREEPDB1 | DW_ALAGOAS / dw_password_123 |
 | Metabase | painel de indicadores | http://localhost:3000 | dwalagoas@dwalagoas.com / dw_password_123 |
+| Neo4j | grafo dos fluxos de pacientes | http://localhost:7474 | neo4j / dw_password_123 |
 | Postgres | metadados do Airflow e do Metabase | interno | — |
 
 As credenciais são de um ambiente local de demonstração.
@@ -116,7 +122,7 @@ DATASUS entram assim que são publicados.
 ```
 aplicar_schema → bronze (8) → silver_dominio → silver (7) → dimensões (8)
   → desabilitar_fks → FATO_INTERNACAO → FATO_PRODUCAO_AMBULATORIAL → FATO_LEITOS
-  → habilitar_fks (VALIDATE) → marts (10)
+  → habilitar_fks (VALIDATE) → marts (10) → grafo_neo4j
 ```
 
 Cada tabela é carregada por um notebook executado pelo papermill, que registra um log
@@ -138,6 +144,23 @@ DIM_MUNICIPIO: 5.571 lidos, 0 gravados, 0 inseridos, 0 atualizados, 5.572 na tab
 As FKs das fatos ficam desabilitadas durante a carga, o que permite o direct-path, e são
 reabilitadas com `VALIDATE` no fim, comprovando a integridade de toda a carga. O download
 do FTP tem novas tentativas com limite de tempo, porque o servidor do DATASUS é instável.
+
+## Grafo (Neo4j)
+
+As perguntas sobre deslocamento de pacientes são, por natureza, perguntas de rede. Depois
+dos marts, a DAG monta no Neo4j um grafo derivado do DW: municípios, regiões e
+macrorregiões de saúde, hospitais, especialidades, procedimentos, meses e perfis de
+paciente, ligados pelas internações. O grafo é reconstruído a cada carga.
+
+![Modelo do grafo](docs/grafos/modelo_arrows.png)
+
+Transbordo de internações entre as regiões de saúde (1.000 ou mais internações): a 1ª
+Região, de Maceió, recebe pacientes de todas as outras.
+
+![Transbordo entre regiões](docs/grafos/g10.png)
+
+As consultas das 10 perguntas estão em `notebooks/grafo/perguntas.cypher`, e as de
+visualização, em `notebooks/grafo/visualizacoes.cypher`.
 
 ## Modelo dimensional
 
@@ -189,6 +212,7 @@ fato é descartada por chave inválida. A `FATO_INTERNACAO` tem as dimensões de
 dags/dag_etl_saude_alagoas.py        DAG: orquestra a carga (1 task por tabela)
 notebooks/dw_utils.py                conexão, download do FTP, carga em lote e log
 notebooks/bronze|silver|gold|mart/   1 notebook por tabela
+notebooks/grafo/                     carga do Neo4j, perguntas em Cypher e modelo do Arrows.app
 sql/00_init_owner.sql                tablespaces e owner DW_ALAGOAS (roda como SYS)
 sql/schema.sql                       DDL completo: fonte única da estrutura do DW
 metabase/criar_painel.py             cria usuário, conexão, perguntas e painel no Metabase
@@ -215,11 +239,6 @@ Para recomeçar do zero (apaga todos os dados):
 docker compose down -v
 docker compose up -d --build
 ```
-
-## Próximos passos
-
-- Modelar em grafo (Neo4j) os fluxos das perguntas 8, 9 e 10: municípios, hospitais e
-  regiões como nós, e os deslocamentos de pacientes como arestas.
 
 ## Licença
 
