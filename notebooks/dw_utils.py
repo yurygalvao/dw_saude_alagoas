@@ -166,6 +166,28 @@ def alternar_fks(habilitar):
 
 
 # ----------------------------------------------------------------------------
+# grafo (neo4j)
+# ----------------------------------------------------------------------------
+def conectar_neo4j():
+    """Driver do Neo4j. Fora do Docker o endereço padrão é localhost."""
+    from neo4j import GraphDatabase  # import aqui: só a carga do grafo usa
+    return GraphDatabase.driver(
+        os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+        auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "dw_password_123")),
+    )
+
+
+def gravar_grafo(driver, cypher, df, rotulo, lote=5_000):
+    """Grava as linhas do DataFrame no grafo com UNWIND, em lotes, e registra o log."""
+    df = df.rename(columns=str.lower).astype(object)
+    linhas = df.where(df.notna(), None).to_dict("records")
+    with driver.session() as s:
+        for i in range(0, len(linhas), lote):
+            s.run(cypher, linhas=linhas[i:i + lote]).consume()
+    print(f"{rotulo}: {_n(len(linhas))} lidos, {_n(len(linhas))} gravados")
+
+
+# ----------------------------------------------------------------------------
 # arquivos do DATASUS
 # ----------------------------------------------------------------------------
 def baixar_ftp(caminho, destino, tentativas=5, inatividade=60, limite=300):

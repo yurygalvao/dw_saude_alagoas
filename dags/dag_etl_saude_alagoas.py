@@ -8,7 +8,7 @@ logs/notebooks/.
 Fluxo:
   aplicar_schema -> bronze (8, só com carregar_bronze=true) -> silver (8) -> dimensões (8, MERGE)
   -> desabilitar_fks -> FATO_INTERNACAO -> FATO_PRODUCAO_AMBULATORIAL -> FATO_LEITOS
-  -> habilitar_fks (VALIDATE) -> marts (10, uma por pergunta de negócio)
+  -> habilitar_fks (VALIDATE) -> marts (10, uma por pergunta de negócio) -> grafo (Neo4j)
 """
 import os
 from datetime import datetime, timedelta
@@ -34,6 +34,7 @@ MARTS = ["mart_p01_custo_volume_municipio", "mart_p02_top_especialidades",
          "mart_p05_custo_procedimento", "mart_p06_perfil_urgencia",
          "mart_p07_respiratorias_mensal", "mart_p08_fluxo_polos",
          "mart_p09_hubs_hospitalares", "mart_p10_transbordo_regioes"]
+GRAFO = "grafo_neo4j"
 
 
 def rodar_notebook(caminho):
@@ -123,12 +124,15 @@ def dag_etl_saude_alagoas():
     with TaskGroup("marts"):
         marts = [notebook("mart", n) for n in MARTS]
 
+    grafo = notebook("grafo", GRAFO)
+
     schema >> bronze
     # silver_dominio primeiro: as demais silvers buscam descrições nele
     cross_downstream(bronze, silver[:1])
     silver[0] >> silver[1:]
     cross_downstream(silver, dimensoes)
     dimensoes >> fks_off >> fatos[0] >> fatos[1] >> fatos[2] >> fks_on >> marts
+    marts >> grafo
 
 
 dag_etl_saude_alagoas()
