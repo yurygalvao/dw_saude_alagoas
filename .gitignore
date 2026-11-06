@@ -40,5 +40,7 @@ data/
 Thumbs.db
 desktop.ini
 
-# notebook de uso local
+# arquivos de uso local
 notebooks/00_demonstracao_video.ipynb
+sql/auditoria.sql
+sql/zerar_dw.sql
