@@ -120,8 +120,9 @@ services:
         condition: service_started
 
   # configura o metabase (admin, conexão com o oracle, perguntas e painel) e termina
+  # o script só usa a biblioteca padrão, então não depende da imagem do airflow
   metabase-init:
-    image: dw-alagoas-airflow:2.8.1
+    image: python:3.10-slim
     container_name: metabase_init
     entrypoint: ["python", "/opt/metabase/criar_painel.py"]
     environment:
@@ -132,8 +133,6 @@ services:
     depends_on:
       metabase:
         condition: service_started
-      airflow-init:
-        condition: service_completed_successfully
 
   # banco de grafos: perguntas de fluxo entre municípios, hospitais e regiões
   neo4j:
